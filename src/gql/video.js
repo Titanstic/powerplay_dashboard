@@ -93,6 +93,48 @@ export const CREATE_VIDEOS = gql`
   }
 `;
 
+export const CREATE_VIDEOS_ZUMBA = gql`
+  mutation MyMutation(
+    $video_package_name: String!
+    $main_type: String!
+    $target_period: String!
+    $duration: String
+    $video_url_a: String!
+    $video_url_b: String!
+    $thumbnail_image_url: String!
+    $promotion: Boolean!
+    $package_type: Int!
+  ) {
+    insert_video_list_one(
+      object: {
+        duration: $duration
+        fk_user_subscription_level_id: $package_type
+        main_type: $main_type
+        promotion: $promotion
+        target_period: $target_period
+        video_package_name: $video_package_name
+        video_url_a: $video_url_a
+        video_url_b: $video_url_b
+        thumbnail_image_url: $thumbnail_image_url
+      }
+    ) {
+      created_at
+      duration
+      fk_sub_type_id
+      fk_user_subscription_level_id
+      id
+      main_type
+      promotion
+      target_period
+      thumbnail_image_url
+      updated_at
+      video_package_name
+      video_url_a
+      video_url_b
+    }
+  }
+`;
+
 //Update video
 export const UPDATE_VIDEOS = gql`
   mutation MyMutation(

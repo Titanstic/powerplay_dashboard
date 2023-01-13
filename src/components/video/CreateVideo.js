@@ -3,7 +3,7 @@ import { useLazyQuery, useMutation, useQuery } from "@apollo/client";
 import imageService from "../../services/image";
 import { GET_IMAGE_UPLOAD_URL } from "../../gql/misc";
 import { Box } from "@mui/system";
-import { CREATE_VIDEOS, SUB_TYPE_NAME } from "../../gql/video";
+import {CREATE_VIDEOS, CREATE_VIDEOS_ZUMBA, SUB_TYPE_NAME} from "../../gql/video";
 import { LoadingButton } from "@mui/lab";
 import {
   Button,
@@ -64,6 +64,7 @@ const CreateVideo = ({ handleClose, videoAlert }) => {
   });
   const [sub, setSub] = useState({});
   const [loadSub, resultSub] = useLazyQuery(SUB_TYPE_NAME);
+  const [showSubInput, setShowSubInput] = useState(false);
 
   useEffect(() => {
     loadSub();
@@ -76,8 +77,19 @@ const CreateVideo = ({ handleClose, videoAlert }) => {
   }, [resultSub]);
 
   const handleChange = (prop) => (event) => {
+    console.log(prop, event.target.value);
+    if(event.target.value === "ZUMBA"){
+      setShowSubInput(true);
+    }
+
+    if(event.target.value === "HOME" || event.target.value === "GYM"){
+      setShowSubInput(false);
+    }
+
     setValues({ ...values, [prop]: event.target.value });
+    console.log(values);
   };
+
 
   const [getImageUrl] = useMutation(GET_IMAGE_UPLOAD_URL, {
     onError: (error) => {
@@ -131,6 +143,45 @@ const CreateVideo = ({ handleClose, videoAlert }) => {
       handleClose();
     },
   });
+
+
+    const [createVideoZumba] = useMutation(CREATE_VIDEOS_ZUMBA, {
+        onError: (error) => {
+            console.log("error : ", error);
+            setLoading(false);
+        },
+        onCompleted: () => {
+            setValues({
+                main_type: "",
+                package_type: "",
+                promotion: "",
+                target_period: "",
+                thumbnail_image_url: "",
+                video_package_name: "",
+                video_url_a: "",
+                video_url_b: "",
+                duration: "",
+                sub_name: "",
+            });
+            setErrors({
+                main_type: "",
+                package_type: "",
+                promotion: "",
+                target_period: "",
+                thumbnail_image_url: "",
+                video_package_name: "",
+                video_url_a: "",
+                video_url_b: "",
+                duration: "",
+                sub_name: "",
+            });
+            setImageFile("");
+            setImagePreview("");
+            setLoading(false);
+            videoAlert("New Video have been created.");
+            handleClose();
+        },
+    });
 
   const thumbnailImageChange = async (e) => {
     if (e.target.files && e.target.files[0]) {
@@ -245,7 +296,7 @@ const CreateVideo = ({ handleClose, videoAlert }) => {
       isErrorExit = true;
     }
 
-    if (!values.sub_name) {
+    if (!values.sub_name && !showSubInput) {
       errorObject.sub_name = "sub type field is required.";
       isErrorExit = true;
     }
@@ -269,9 +320,14 @@ const CreateVideo = ({ handleClose, videoAlert }) => {
       console.log(errorObject);
       return;
     }
+    console.log(values);
     try {
       await imageService.uploadImage(imageFileUrl, imageFile);
-      createVideo({ variables: { ...values } });
+      if(values.main_type === "ZUMBA"){
+          createVideoZumba({variables: {...values}});
+      }else{
+          createVideo({ variables: { ...values } });
+      }
     } catch (error) {
       console.log("error : ", error);
     }
@@ -482,7 +538,7 @@ const CreateVideo = ({ handleClose, videoAlert }) => {
                 <FormHelperText error>{errors.promotion}</FormHelperText>
               )}
             </FormControl>
-            <FormControl variant="outlined" sx={{ my: 2 }}>
+            <FormControl variant="outlined" sx={{ my: 2 }} disabled={showSubInput}>
               <InputLabel id="sub_type">Sub type</InputLabel>
               <Select
                 labelId="sub_type"
